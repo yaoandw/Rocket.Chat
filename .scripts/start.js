@@ -34,7 +34,7 @@ const appOptions = {
 	env: {
 		PORT: 3000,
 		ROOT_URL: 'http://localhost:3000',
-		// MONGO_URL: 'mongodb://localhost:27017/test',
+		// MONGO_URL: 'mongodb://root:123456@localhost:27017/rocketchat?authSource=admin&authMechanism=SCRAM-SHA-256',
 		// MONGO_OPLOG_URL: 'mongodb://localhost:27017/local',
 	},
 };
