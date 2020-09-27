@@ -2,6 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { ReactiveVar } from 'meteor/reactive-var';
 import { Tracker } from 'meteor/tracker';
+import { HTTP } from 'meteor/http';
 
 import { VRecDialog } from '../../../ui-vrecord/client';
 import { messageBox, modal } from '../../../ui-utils';
@@ -9,6 +10,7 @@ import { fileUpload } from '../../../ui';
 import { settings } from '../../../settings';
 import { t } from '../../../utils';
 import { mime } from '../../../utils/lib/mimeTypes';
+import { Users } from '../../../models/client/index';
 
 messageBox.actions.add('Create_new', 'Video_message', {
 	id: 'video-message',
@@ -22,7 +24,10 @@ messageBox.actions.add('Create_new', 'Video_message', {
 			|| !settings.get('FileUpload_MediaTypeBlackList').match(/video\/webm|video\/\*/i))
 		&& (!settings.get('FileUpload_MediaTypeWhiteList')
 			|| settings.get('FileUpload_MediaTypeWhiteList').match(/video\/webm|video\/\*/i)),
-	action: ({ rid, tmid, messageBox }) => (VRecDialog.opened ? VRecDialog.close() : VRecDialog.open(messageBox, { rid, tmid })),
+	action: ({ rid, tmid, messageBox }) => (VRecDialog.opened ? VRecDialog.close() : VRecDialog.open(messageBox, {
+		rid,
+		tmid,
+	})),
 });
 
 messageBox.actions.add('Add_files_from', 'Computer', {
@@ -65,15 +70,67 @@ messageBox.actions.add('Add_files_from', 'Computer', {
 	},
 });
 
+// added by yaoandw start
+messageBox.actions.add('收集问题', '收集', {
+	id: 'forward-message',
+	icon: 'quote',
+	condition: () => {
+		const userId = Meteor.userId(); // Meteor._localStorage.getItem('Meteor.userId');
+		return Users.isUserInRole(userId, 'admin') || Users.isUserInRole(userId, 'assistant');
+	},
+	action({ replies }) {
+		const replyIds = replies.map(({ _id }) => _id);
+		console.log(`replies:${ JSON.stringify(replies) },replyIds:${ JSON.stringify(replyIds) },userId:${ Meteor.userId() }`);
+		// HTTP.post('https://server.cms.jojo.la/cms/api/public/article/main', { data: { siteName: 'siteadmin' } }, (error, result) => {
+		// 	console.log(result);
+		// 	console.log(error);
+		// });
+		const env = process.env.NODE_ENV;
+		const wechatUniUrl = env === 'development' ? 'http://192.168.2.147:8081' : 'https://mp.cms.jojo.la';
+		const query = `/pages/question/question?replies=${ replyIds.join() }&user=${ Meteor.userId() }&tn=${ Meteor._localStorage.getItem('Cms.token') }`;
+		console.log(`query:${ query }`);
+		// eslint-disable-next-line no-use-before-define
+		if (isMiniProgram()) {
+			/* eslint-disable*/
+			let url = query;
+			console.log(`url is ${ url },`);
+			wx.miniProgram.navigateTo({
+				// 跳转到登录页
+				url: url,
+				fail: (error) => {
+					console.log('error；', error)
+				}
+			})
+		} else {
+			const redirectUrl = wechatUniUrl + query;
+			console.log(`redirectUrl is ${ redirectUrl },`);
+			location.href = redirectUrl;
+		}
+	},
+});
+const isMiniProgram = () => {
+	return (
+		navigator.userAgent.match(/miniprogram/i) ||
+		window.__wxjs_environment === 'miniprogram'
+	)
+};
+// added end
+
 const canGetGeolocation = new ReactiveVar(false);
 
 const getGeolocationPermission = () => new Promise((resolve) => {
-	if (!navigator.permissions) { resolve(true); }
-	navigator.permissions.query({ name: 'geolocation' }).then(({ state }) => { resolve(state); });
+	if (!navigator.permissions) {
+		resolve(true);
+	}
+	navigator.permissions.query({ name: 'geolocation' }).then(({ state }) => {
+		resolve(state);
+	});
 });
 
 const getGeolocationPosition = () => new Promise((resolvePos) => {
-	navigator.geolocation.getCurrentPosition(resolvePos, () => { resolvePos(false); }, {
+	navigator.geolocation.getCurrentPosition(resolvePos, () => {
+		resolvePos(false);
+	}, {
 		enableHighAccuracy: true,
 		maximumAge: 0,
 		timeout: 10000,
@@ -84,7 +141,9 @@ const getCoordinates = async () => {
 	const status = await getGeolocationPermission();
 	if (status === 'prompt') {
 		let resolveModal;
-		const modalAnswer = new Promise((resolve) => { resolveModal = resolve; });
+		const modalAnswer = new Promise((resolve) => {
+			resolveModal = resolve;
+		});
 		modal.open({
 			title: t('You_will_be_asked_for_permissions'),
 			confirmButtonText: t('Continue'),

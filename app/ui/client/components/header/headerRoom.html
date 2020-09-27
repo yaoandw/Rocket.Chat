@@ -1,77 +1,105 @@
 <template name="headerRoom">
 	<header class="rc-header rc-header--room" >
-		<div class="rc-header__wrap">
-
-			<div class="rc-header__block rc-header--burger">
-				{{> burger}}
-			</div>
-
-			{{#if isDiscussion}}
-				<div class="rc-header__block rc-header__block--action js-open-parent-channel" title={{_ "Back_to_room"}}>
-					<span class="rc-header__first-icon">{{> icon block="rc-header__icon rc-header__icon" icon="back"}}</span>
-				</div>
-			{{/if}}
-
-			{{#if isToggleFavoriteButtonVisible}}
-				<div class="rc-header__block rc-header__favorite rc-header__block--action">
-					<button title="{{toggleFavoriteButtonIconLabel}}" type="button" class="rc-header__toggle-favorite {{#if isToggleFavoriteButtonChecked}}rc-header__toggle-favorite--checked{{/if}} rc-header__first-icon js-favorite">
-						{{> icon block="rc-header__icon" icon=toggleFavoriteButtonIcon}}
-					</button>
-				</div>
-			{{/if}}
-
-			<!-- TODO: fix it style and helper -->
-			{{#if tokenAccessChannel}}
-				<i class="icon-tokenpass" aria-label="{{_ "Tokenpass_Channel_Label"}}"></i>
-			{{/if}}
-
-			<div class="rc-header__content rc-header__block">
-				{{#if isDirect}}
-				<div class="rc-header__block">
-					<div class="rc-header__image">
-						{{> avatar url=avatarBackground}}
-					</div>
-				</div>
-				{{/if}}
-
-				<div class="rc-header__data">
-					{{#unless secondaryName}}
-					<div class="rc-header__name">{{> icon block="rc-header__icon" icon=roomIcon}}{{roomName}}</div>
-					{{else}}
-					<div class="rc-header__name">{{roomName}} <div class="rc-header__username">@{{secondaryName}}</div></div>
-					{{/unless}}
-
-					{{#if hasPresence}}
-					{{# userPresence uid=uid}}<span class="rc-header__status">
-						<div class="rc-header__status-bullet rc-header__status-bullet--{{userStatus}}" title="{{_ userStatus}}"></div>
-						<div class="rc-header__visual-status">{{userStatusText}}</div>
-					</span>{{/userPresence}}
-					{{else}}
-					{{#if roomTopic}}<span class="rc-header__topic">{{{roomTopic}}}</span>{{/if}}
-					{{/if}}
-				</div>
-
-				{{#if sentimentSmile}}
-				<span class="sentiment">{{sentimentSmile}}</span>
-				{{/if}}
-				{{#if isTranslated}}
-				<i class="icon-language" title="{{_ "Translated"}}"></i>
+<!--		<iframe src="{{iframeUrl}}" style="height: 33px;width: 100%;"></iframe>-->
+		<div class="ch_wrapper">
+			<div class="ch_question">
+				<img alt="Avatar" src="/images/yitian/chat-q.png" />
+				<button>问题墙</button>
+				{{#if showNotAnsweredCnt}}
+				<div class="ch_question_unanswered">{{getNotAnsweredCnt}}</div>
 				{{/if}}
 			</div>
-
-			{{#if isSection}}
-			<span class="rc-header__block">{{_ sectionName}}</span>
-			{{/if}}
-			{{#if encryptionState}}
-			<div class="rc-header__block rc-header__block-action rc-header__encryption">
-				<div class="rc-room-actions">
-					<button title="{{_ 'E2E_Enabled'}}" class="rc-room-actions__action tab-button rc-header__toggle-encryption js-toggle-encryption {{encryptionState}}">{{> icon icon="key"}}</button>
-				</div>
+			<div class="ch_title">
+				{{roomName}}
 			</div>
-			{{/if}}
-			{{#if Template.contentBlock}}
-				{{> Template.contentBlock}}
-			{{/if}}
+			<div class="ch_preference">
+				<img alt="Avatar" src="/images/yitian/chat-more.png" />
+			</div>
+
 		</div>
+		{{#if showNotice}}
+		<div class="ch_line"></div>
+		<div class="ch_notice">
+			<div class="ch_notice_icon">
+				<img src="/images/yitian/chat-notice.png" />
+			</div>
+			<div class="ch_notice_content">
+				{{getNotice.title}}
+			</div>
+		</div>
+		{{/if}}
+<!--		<div class="rc-header__wrap">-->
+
+<!--			<div class="rc-header__block rc-header&#45;&#45;burger">-->
+<!--				{{> burger}}-->
+<!--			</div>-->
+
+<!--			{{#if isDiscussion}}-->
+<!--				<div class="rc-header__block rc-header__block&#45;&#45;action js-open-parent-channel" title={{_ "Back_to_room"}}>-->
+<!--					<span class="rc-header__first-icon">{{> icon block="rc-header__icon rc-header__icon" icon="back"}}</span>-->
+<!--				</div>-->
+<!--			{{/if}}-->
+
+<!--			{{#if isToggleFavoriteButtonVisible}}-->
+<!--				<div class="rc-header__block rc-header__favorite rc-header__block&#45;&#45;action">-->
+<!--					<button title="{{toggleFavoriteButtonIconLabel}}" type="button" class="rc-header__toggle-favorite {{#if isToggleFavoriteButtonChecked}}rc-header__toggle-favorite&#45;&#45;checked{{/if}} rc-header__first-icon js-favorite">-->
+<!--						{{> icon block="rc-header__icon" icon=toggleFavoriteButtonIcon}}-->
+<!--					</button>-->
+<!--				</div>-->
+<!--			{{/if}}-->
+
+<!--			&lt;!&ndash; TODO: fix it style and helper &ndash;&gt;-->
+<!--			{{#if tokenAccessChannel}}-->
+<!--				<i class="icon-tokenpass" aria-label="{{_ "Tokenpass_Channel_Label"}}"></i>-->
+<!--			{{/if}}-->
+
+<!--			<div class="rc-header__content rc-header__block">-->
+<!--				{{#if isDirect}}-->
+<!--				<div class="rc-header__block">-->
+<!--					<div class="rc-header__image">-->
+<!--						{{> avatar url=avatarBackground}}-->
+<!--					</div>-->
+<!--				</div>-->
+<!--				{{/if}}-->
+
+<!--				<div class="rc-header__data">-->
+<!--					{{#unless secondaryName}}-->
+<!--					<div class="rc-header__name">{{> icon block="rc-header__icon" icon=roomIcon}}{{roomName}}</div>-->
+<!--					{{else}}-->
+<!--					<div class="rc-header__name">{{roomName}} <div class="rc-header__username">@{{secondaryName}}</div></div>-->
+<!--					{{/unless}}-->
+
+<!--					{{#if hasPresence}}-->
+<!--					{{# userPresence uid=uid}}<span class="rc-header__status">-->
+<!--						<div class="rc-header__status-bullet rc-header__status-bullet&#45;&#45;{{userStatus}}" title="{{_ userStatus}}"></div>-->
+<!--						<div class="rc-header__visual-status">{{userStatusText}}</div>-->
+<!--					</span>{{/userPresence}}-->
+<!--					{{else}}-->
+<!--					{{#if roomTopic}}<span class="rc-header__topic">{{{roomTopic}}}</span>{{/if}}-->
+<!--					{{/if}}-->
+<!--				</div>-->
+
+<!--				{{#if sentimentSmile}}-->
+<!--				<span class="sentiment">{{sentimentSmile}}</span>-->
+<!--				{{/if}}-->
+<!--				{{#if isTranslated}}-->
+<!--				<i class="icon-language" title="{{_ "Translated"}}"></i>-->
+<!--				{{/if}}-->
+<!--			</div>-->
+
+<!--			{{#if isSection}}-->
+<!--			<span class="rc-header__block">{{_ sectionName}}</span>-->
+<!--			{{/if}}-->
+<!--			{{#if encryptionState}}-->
+<!--			<div class="rc-header__block rc-header__block-action rc-header__encryption">-->
+<!--				<div class="rc-room-actions">-->
+<!--					<button title="{{_ 'E2E_Enabled'}}" class="rc-room-actions__action tab-button rc-header__toggle-encryption js-toggle-encryption {{encryptionState}}">{{> icon icon="key"}}</button>-->
+<!--				</div>-->
+<!--			</div>-->
+<!--			{{/if}}-->
+<!--			{{#if Template.contentBlock}}-->
+<!--				{{> Template.contentBlock}}-->
+<!--			{{/if}}-->
+<!--		</div>-->
 	</header>
 </template>

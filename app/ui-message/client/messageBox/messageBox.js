@@ -84,6 +84,7 @@ Template.messageBox.onCreated(function() {
 
 
 	this.send = (event) => {
+		console.log('111111111111111');
 		const { input } = this;
 
 		if (!input) {
@@ -98,6 +99,7 @@ Template.messageBox.onCreated(function() {
 			return;
 		}
 
+		console.log(`rid:${ rid },tmid:${ tmid },onSend:${ onSend },tshow:${ tshow },value:${ value }`);
 		onSend.call(this.data, event, { rid, tmid, value, tshow }, () => {
 			autogrow.update();
 			input.focus();
@@ -430,6 +432,7 @@ Template.messageBox.events({
 		onValueChanged && onValueChanged.call(this, event, { rid, tmid });
 	},
 	async 'click .js-send'(event, instance) {
+		console.log('4444444444444444');
 		instance.send(event);
 	},
 	'click .js-action-menu'(event, instance) {
@@ -469,6 +472,13 @@ Template.messageBox.events({
 		popover.open(config);
 	},
 	'click .js-message-actions .js-message-action'(event, instance) {
+		console.log('5555555555555555');
+		const { input } = instance;
+		if (!input) {
+			return;
+		}
+		// added by yaoandw
+		const replies = $(input).data('reply') || [];
 		const { id } = event.currentTarget.dataset;
 		const actions = messageBox.actions.getById(id);
 		actions
@@ -479,6 +489,7 @@ Template.messageBox.events({
 					tmid: this.tmid,
 					messageBox: instance.firstNode,
 					event,
+					replies,
 				});
 			});
 	},

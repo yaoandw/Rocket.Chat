@@ -159,6 +159,13 @@ Template.popover.events({
 		popover.close();
 	},
 	'click [data-type="messagebox-action"]'(event, t) {
+		console.log('6666666666666');
+		// added by yaoandw
+		// const { input } = t;
+		// if (!input) {
+		// 	return;
+		// }
+		// const replies = $(input).data('reply') || [];
 		const { id } = event.currentTarget.dataset;
 		const actions = messageBox.actions.getById(id);
 		actions
@@ -167,6 +174,7 @@ Template.popover.events({
 				action.call(null, {
 					...t.data.data,
 					event,
+					// replies,
 				});
 			});
 		popover.close();

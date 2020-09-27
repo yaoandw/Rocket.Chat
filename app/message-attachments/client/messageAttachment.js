@@ -3,7 +3,7 @@ import { Template } from 'meteor/templating';
 
 import { DateFormat } from '../../lib';
 import { getURL } from '../../utils/client';
-import { renderMessageBody, createCollapseable } from '../../ui-utils';
+import {renderMessageBody, createCollapseable, keyCodes} from '../../ui-utils';
 
 const colors = {
 	good: '#35AC19',
@@ -147,3 +147,34 @@ Template.messageAttachment.onRendered(function() {
 		}
 	});
 });
+
+Template.messageAttachment.events({
+	'click .attachment-title .attachment-title-link'() {
+		// code goes here
+		console.log(`this.title_link is ${ this.title_link }`);
+		const linkWithToken = `${ this.title_link }&tn=${ Meteor._localStorage.getItem('Cms.token') }`;
+		// eslint-disable-next-line no-use-before-define
+		if (isMiniProgram()) {
+			/* eslint-disable*/
+			let url = linkWithToken;
+			url = url.substring(url.indexOf('/pages/'))
+			console.log(`url is ${ url },`);
+			wx.miniProgram.navigateTo({
+				// 跳转到登录页
+				url: url,
+				fail: (error) => {
+					console.log('error；', error)
+				}
+			})
+		} else {
+			location.href = linkWithToken;
+		}
+	},
+});
+
+const isMiniProgram = () => {
+	return (
+		navigator.userAgent.match(/miniprogram/i) ||
+		window.__wxjs_environment === 'miniprogram'
+	)
+};

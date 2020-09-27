@@ -38,6 +38,7 @@ Template.headerRoom.helpers({
 	isToggleFavoriteButtonChecked: () => Template.instance().state.get('favorite'),
 	toggleFavoriteButtonIconLabel: () => (Template.instance().state.get('favorite') ? t('Unfavorite') : t('Favorite')),
 	toggleFavoriteButtonIcon: () => (Template.instance().state.get('favorite') ? 'star-filled' : 'star'),
+	// iframeUrl: () => ((process.env.NODE_ENV === 'development' ? 'http://192.168.2.147:8081' : 'https://mp.cms.jojo.la') + '/pages/chat/chatHeaderInIframe?site=' + Meteor._localStorage.getItem('Cms.site') + '&tn=' + Meteor._localStorage.getItem('Cms.token')),
 	uid() {
 		return getUidDirectMessage(this._id);
 	},
@@ -139,6 +140,19 @@ Template.headerRoom.helpers({
 	isSection() {
 		return Template.instance().data.sectionName != null;
 	},
+	// added by yaoandw
+	getNotAnsweredCnt() {
+		return Template.instance().notAnsweredCnt.get();
+	},
+	showNotAnsweredCnt() {
+		return Template.instance().notAnsweredCnt.get() > 0;
+	},
+	getNotice() {
+		return Template.instance().notice.get();
+	},
+	showNotice() {
+		return Template.instance().notice.get() != null && !Template.instance().notice.get().read;
+	},
 });
 
 Template.headerRoom.events({
@@ -203,7 +217,114 @@ Template.headerRoom.events({
 			tabBar.open(TabBar.getButton('user-info'));
 		}
 	},
+	'click .ch_question'() {
+		const query = `/pages/question/list?site=${ Meteor._localStorage.getItem('Cms.site') }&tn=${ Meteor._localStorage.getItem('Cms.token') }`;
+		jumpToYitian(query);
+	},
+	'click .ch_preference'() {
+		const query = `/pages/chat/chatPreference?site=${ Meteor._localStorage.getItem('Cms.site') }&tn=${ Meteor._localStorage.getItem('Cms.token') }`;
+		jumpToYitian(query);
+	},
+	'click .ch_notice'() {
+		const query = `${ Template.instance().notice.get().link }&tn=${ Meteor._localStorage.getItem('Cms.token') }`;
+		setNoticeAsRead(() => {
+			jumpToYitian(query);
+		});
+	},
 });
+
+const jumpToYitian = (query) => {
+	const env = process.env.NODE_ENV;
+	const wechatUniUrl = env === 'development' ? 'http://192.168.2.147:8081' : 'https://mp.cms.jojo.la';
+	console.log(`query:${ query }`);
+	// eslint-disable-next-line no-use-before-define
+	if (isMiniProgram()) {
+		/* eslint-disable*/
+		let url = query;
+		console.log(`url is ${ url },`);
+		wx.miniProgram.navigateTo({
+			// 跳转到登录页
+			url: url,
+			fail: (error) => {
+				console.log('error；', error)
+			}
+		})
+	} else {
+		const redirectUrl = wechatUniUrl + query;
+		console.log(`redirectUrl is ${ redirectUrl },`);
+		location.href = redirectUrl;
+	}
+}
+
+const isMiniProgram = () => {
+	return (
+		navigator.userAgent.match(/miniprogram/i) ||
+		window.__wxjs_environment === 'miniprogram'
+	)
+};
+
+const getCurrentUser = (success) => {
+	HTTP.get(getApiUrl() + '/cms/api/cms/user/current', { headers: { authorization: Meteor._localStorage.getItem('Cms.token') } }, (error, result) => {
+		if (error) {
+			console.log(error);
+		} else {
+			console.log(result);
+			if (success) {
+				success(result.data.data)
+			}
+		}
+	});
+}
+
+const getUnansweredCount = (success) => {
+	HTTP.post(getApiUrl() + '/cms/api/public/question/count', { headers: { authorization: Meteor._localStorage.getItem('Cms.token') }, data: { siteName: Meteor._localStorage.getItem('Cms.site'), answered: false } }, (error, result) => {
+		if (error) {
+			console.log(error);
+		} else {
+			console.log(result);
+			if (success) {
+				success(result.data.data)
+			}
+		}
+	});
+}
+
+const getLastNotice = (success) => {
+	HTTP.post(getApiUrl() + '/cms-support/api/support/sys_notice/last', { headers: { authorization: Meteor._localStorage.getItem('Cms.token') }, data: { siteDomain: Meteor._localStorage.getItem('Cms.site') } }, (error, result) => {
+		if (error) {
+			console.log(error);
+		} else {
+			console.log(result);
+			if (success) {
+				success(result.data?result.data.data:result.data)
+			}
+		}
+	});
+}
+
+const setNoticeAsRead = (success) => {
+	HTTP.post(getApiUrl() + '/cms-support/api/support/sys_notice/set_as_read', { headers: { authorization: Meteor._localStorage.getItem('Cms.token') }, data: { id: Template.instance().notice.get().id } }, (error, result) => {
+		if (error) {
+			console.log(error);
+		} else {
+			console.log(result);
+			if (success) {
+				success(result.data?result.data.data:result.data)
+			}
+		}
+	});
+}
+
+const getApiUrl = () => {
+	const env = process.env.NODE_ENV;
+	const apiUrl = env === 'development' ? 'http://192.168.2.147:5555' : 'https://server.cms.jojo.la';
+	return apiUrl;
+}
+
+
+
+
+
 
 const loadUserStatusText = () => {
 	const instance = Template.instance();
@@ -273,4 +394,19 @@ Template.headerRoom.onCreated(function() {
 	}
 
 	loadUserStatusText();
+
+	//added by yaoandw
+	this.notAnsweredCnt = new ReactiveVar(0)
+	getCurrentUser((user) => {
+		if (user.roles.includes('doctor')) {
+			getUnansweredCount((cnt) => {
+				this.notAnsweredCnt.set(cnt)
+			})
+		}
+	});
+
+	this.notice = new ReactiveVar(null)
+	getLastNotice((notice) => {
+		this.notice.set(notice)
+	});
 });

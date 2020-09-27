@@ -229,6 +229,7 @@ Template.main.helpers({
 
 Template.main.events({
 	'click div.burger'() {
+		console.log('lllllllllllllllllll');
 		return menu.toggle();
 	},
 });
